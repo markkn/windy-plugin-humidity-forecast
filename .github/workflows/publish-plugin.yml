@@ -1,0 +1,47 @@
+name: publish-plugin
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  publish-plugin:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Build
+        run: |
+          npm ci
+          npm run build
+
+      - name: Publish plugin
+        env:
+          WINDY_API_KEY: ${{ secrets.WINDY_API_KEY }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${WINDY_API_KEY:-}" ]; then
+            echo "::error::Repository secret WINDY_API_KEY is not configured." >&2
+            exit 1
+          fi
+
+          cd dist
+          echo "Creating plugin archive..."
+          plugin_metadata_file="$(mktemp)"
+          jq --arg repositoryName "$GITHUB_REPOSITORY" \
+             --arg commitSha "$GITHUB_SHA" \
+             --arg repositoryOwner "$GITHUB_REPOSITORY_OWNER" \
+             '. + {repositoryName: $repositoryName, commitSha: $commitSha, repositoryOwner: $repositoryOwner}' \
+             plugin.json > "$plugin_metadata_file"
+          mv "$plugin_metadata_file" plugin.json
+          tar cf ../plugin.tar .
+
+          echo "Publishing plugin..."
+          curl --silent --show-error --fail-with-body \
+            --request POST 'https://node.windy.com/plugins/v1.0/upload' \
+            --header "x-windy-api-key: ${WINDY_API_KEY}" \
+            --form "plugin_archive=@../plugin.tar"

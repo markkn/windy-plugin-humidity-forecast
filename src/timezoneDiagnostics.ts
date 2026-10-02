@@ -42,7 +42,7 @@ export const timezoneResponseSummary = (value: unknown): string => {
     .map(key => `${key}=${scalar(data[key])}`).join(' ');
 };
 
-/** TEMPORARY: localized name fields only, never a full reverse-geocoding payload. */
+/** Allowlisted localized name fields for optional troubleshooting, never a full payload. */
 export const reverseNameSummary = (value: unknown): string => {
   const result = object(value);
   return ['name', 'nameValid', 'region', 'country', 'cc']

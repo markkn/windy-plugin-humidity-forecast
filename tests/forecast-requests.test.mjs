@@ -553,7 +553,7 @@ test('each selected location gets exactly zoom 5 and 8, independent of forecast/
   void plugin.changeModel('icon');
   plugin.onopen({ lat: 20, lon: 40 });
   assert.equal(plugin.nameRequests.length, 2);
-  assert.equal(plugin.mapListeners.has('zoomend'), false); // no probe traffic
+  assert.equal(plugin.mapListeners.has('zoomend'), false); // zoom alone never requests names
   assert.ok(!source.includes('reverseNameProbe'));
   plugin.handleMapClick({ lat: 35, lon: 21 });
   assert.deepEqual(plugin.nameRequests.map(request => request.forcedZoom), [5, 8, 5, 8]);
@@ -911,13 +911,13 @@ test('release defaults leave diagnostics inert through normal phone opening, dra
   assert.equal(plugin.state().timezoneDebugLines, history);
   assert.equal(plugin.state().timezoneDebugText, '');
   assert.equal(plugin.state().diagnosticPanelVisible, false);
-  assert.equal(plugin.logs.length, 0); // catches log/info/debug/warn/error, including probes
+  assert.equal(plugin.logs.length, 0); // catches log/info/debug/warn/error, including naming
   plugin.destroy();
   plugin.recordTimezoneDebug('after destroy');
   assert.equal(plugin.logs.length, 0);
 });
 
-test('private opt-in retains compact history/panel/logging and stops recording after destroy', () => {
+test('troubleshooting opt-in retains compact history/panel/logging and stops recording after destroy', () => {
   const { plugin } = waitingPhone({ diagnostics: true });
   for (let i = 0; i < 40; i++) plugin.recordTimezoneDebug('private event ' + i);
   assert.equal(plugin.state().diagnosticPanelVisible, true);
@@ -1005,7 +1005,7 @@ test('desktop/tablet keep click selection and never follow moveend', () => {
   }
 });
 
-test('timezone footnote has separate source and IANA/fallback lines and private version is consistent', () => {
+test('timezone footnote has separate source and IANA/fallback lines and public release metadata is consistent', () => {
   const footnote = source.match(/<div class="footnote">([\s\S]*?)\n    <\/div>/)[1];
   const firstLine = footnote.match(/<div>(.*?)<\/div>/)[1];
   assert.match(firstLine, /^Windy forecast data · /);
@@ -1013,10 +1013,17 @@ test('timezone footnote has separate source and IANA/fallback lines and private 
   assert.match(footnote, /Time displayed is for selected location · \{timeZone\}/);
   assert.match(footnote, /Time unavailable for selected location · Using UTC/);
   assert.ok(!footnote.includes('TZabbrev'));
-  assert.equal(config.version, '0.1.11');
-  assert.equal(config.private, true);
+  assert.equal(config.version, '0.1.12');
+  assert.equal(config.private, false);
   const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url)));
   const lock = JSON.parse(readFileSync(new URL('../package-lock.json', import.meta.url)));
+  assert.equal(config.title, 'Humidity Forecast');
+  assert.equal(config.author, 'markkn');
+  assert.equal(pkg.author, config.author);
+  assert.equal(pkg.description, config.description);
+  assert.equal(pkg.repository.url, 'git+' + config.repository + '.git');
+  assert.equal(timezoneDiagnostics.TEMPORARY_TIMEZONE_DIAGNOSTICS, false);
+  assert.equal(existsSync(new URL('../src/screenshot.jpg', import.meta.url)), true);
   assert.equal(pkg.version, config.version);
   assert.equal(lock.version, config.version);
   assert.equal(lock.packages[''].version, config.version);
@@ -1098,7 +1105,7 @@ test('half-open request tolerates synchronous confirmation and a new lifecycle g
   reopened.destroy();
 });
 
-test('disabling temporary diagnostic UI does not disable the phone half-open request', async () => {
+test('disabled troubleshooting diagnostics do not disable the phone half-open request', async () => {
   const mobile = createPlugin('UTC', undefined, { isMobile: true, diagnostics: false });
   mobile.broadcastListeners.get('pluginOpened')(config.name);
   await settle();

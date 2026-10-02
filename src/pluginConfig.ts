@@ -2,7 +2,7 @@ import type { ExternalPluginConfig } from '@windy/interfaces';
 
 const config: ExternalPluginConfig = {
   name: 'windy-plugin-humidity-forecast',
-  version: '0.1.11',
+  version: '0.1.12',
   icon: '💧',
   title: 'Humidity Forecast',
   description: 'Hourly, 3-hour, and daily high/low humidity forecasts with temperature and dew point.',
@@ -14,7 +14,7 @@ const config: ExternalPluginConfig = {
   routerPath: '/humidity-forecast/:lat?/:lon?',
   addToContextmenu: true,
   listenToSingleclick: true,
-  private: true,
+  private: false,
 };
 
 export default config;

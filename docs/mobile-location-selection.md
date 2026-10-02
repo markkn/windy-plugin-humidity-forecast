@@ -1,8 +1,7 @@
 # Intentional phone location selection
 
-Private 0.1.10 replaces HOME-versus-SEARCH inference with explicit opening
-coordinates or user-driven crosshair selection. Desktop/tablet click behavior
-is unchanged.
+The drag-first implementation uses explicit opening coordinates or user-driven
+crosshair selection on phones. Desktop/tablet uses click-to-select.
 
 ## Why the plugin waits
 
@@ -12,10 +11,10 @@ The current external-plugin APIs tested expose no reliable synchronous signal
 identifying which location is authoritative. Valid picker coordinates alone do
 not establish that the picker is active.
 
-URL/router recovery was unavailable by plugin setup, picker-mobile open state
-did not distinguish the cases, and diagnostic detail state remained null. Those
-experiments have been removed. Selection does not depend on DOM inspection,
-screen geometry heuristics, private component state, or undocumented guesses.
+Inspection and runtime testing found no usable initial-location signal in the
+current URL/router data, picker-mobile open state or detail state. Selection
+therefore does not depend on DOM inspection, screen geometry heuristics,
+private component state or undocumented guesses.
 
 ## Opening and waiting
 
@@ -35,8 +34,10 @@ The normal waiting instruction follows `pluginHalfOpened` for this plugin:
 - Fullscreen: **Drag this panel down halfway, then move the map to choose a forecast location.**
 
 Automatic half-open is a convenience only. Manually lowering the panel works
-equally well; returning to fullscreen updates the instruction. No misleading
-coordinates, empty forecast table or request-error message is shown while waiting.
+equally well; returning to fullscreen updates the instruction. See
+[Windy integration](plugin-integration.md#initial-phone-half-height) for the panel
+event handling and runtime support. No misleading coordinates, empty forecast
+table or request-error message is shown while waiting.
 
 ## First movement and ongoing selection
 
@@ -59,15 +60,10 @@ resize overlaps the first drag or a valid map baseline is unavailable. Only
 settled movement fetches data. Cancellation and stale-result guards remain intact.
 All map and broadcast listeners are removed on destroy.
 
-## Diagnostics and regression verification
+## Regression verification
 
-Reusable diagnostics are disabled by default. Release builds show no private
-panel and produce no diagnostic history or routine plugin console output.
-For a private troubleshooting build only, set `TEMPORARY_TIMEZONE_DIAGNOSTICS`
-to `true` in `src/timezoneDiagnostics.ts`. That enables compact awaiting state,
-mount baselines, movement decisions, sheet state, half-open request status and
-selected coordinates, with history bounded to 12 events. The flag never changes
-selection or half-open behavior; retain the helpers for future troubleshooting.
+Optional troubleshooting diagnostics are described in
+[Windy integration](plugin-integration.md#optional-troubleshooting-and-verification).
 
 Test HOME and SEARCH without dragging: both should wait with no location
 requests unless explicit plugin coordinates were provided. Test automatic and

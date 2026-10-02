@@ -136,7 +136,7 @@
   import config from './pluginConfig';
   import { formatLocationName, parseLatLon, sameLocation, explicitPluginLocation } from './location';
   import { normalizeTimeZoneName } from './timezone';
-  // Reusable diagnostics are opt-in for private testing, independent of behavior.
+  // Optional troubleshooting diagnostics are independent of behavior.
   import {
     TEMPORARY_TIMEZONE_DIAGNOSTICS, MAX_TIMEZONE_DEBUG_LINES, appendTimezoneDebug,
     rawCoordinateSummary, timezoneErrorSummary,
